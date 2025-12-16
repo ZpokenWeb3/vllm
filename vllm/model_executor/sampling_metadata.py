@@ -13,6 +13,7 @@ from vllm.sequence import (VLLM_TOKEN_ID_ARRAY_TYPE, SequenceData,
                            SequenceGroupMetadata)
 from vllm.utils import (PyObjectCache, async_tensor_h2d,
                         is_pin_memory_available, make_tensor_with_pad)
+from vllm.model_executor.utils import compute_run_seed
 
 _SAMPLING_EPS = 1e-5
 
@@ -49,6 +50,8 @@ class SequenceGroupToSample:
     prompt_logprob_indices: list[int]
     # Sample token indices from logits. Empty if sampling is not required.
     sample_indices: list[int]
+    # Run seed computed from seed and inference_id for artifact tracking
+    run_seed: Optional[int] = None
 
 
     id: UUID = None
@@ -269,6 +272,7 @@ def _prepare_seq_groups(
         sampling_params = seq_group_metadata.sampling_params
         is_prompt = seq_group_metadata.is_prompt
         generator: Optional[torch.Generator] = None
+        run_seed: Optional[int] = None
         # If the current seq group is in decode stage, it is None.
         seq_len: Optional[int] = None
         query_len: Optional[int] = None
@@ -280,8 +284,9 @@ def _prepare_seq_groups(
 
         if seq_group_metadata.is_prompt:
             if sampling_params.seed is not None:
-                generator = torch.Generator(device=device).manual_seed(
-                    sampling_params.seed)
+                run_seed = compute_run_seed(sampling_params.seed,
+                                           sampling_params.inference_id)
+                generator = torch.Generator(device=device).manual_seed(run_seed)
                 if generators is not None:
                     generators[seq_group_metadata.request_id] = generator
 
@@ -352,6 +357,7 @@ def _prepare_seq_groups(
             sample_obj.seq_len = seq_len
             sample_obj.query_len = query_len
             sample_obj.generator = generator
+            sample_obj.run_seed = run_seed
             sample_obj.is_prompt = is_prompt
         else:
             sample_obj = SequenceGroupToSample(
@@ -361,6 +367,7 @@ def _prepare_seq_groups(
                 seq_len=seq_len,
                 query_len=query_len,
                 generator=generator,
+                run_seed=run_seed,
                 is_prompt=is_prompt,
                 prompt_logprob_indices=list(prompt_logprob_indices),
                 sample_indices=list(sample_indices),
