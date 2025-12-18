@@ -3,7 +3,7 @@ name: Build Docker Image with Deterministic Sampling
 on:
   push:
     branches:
-      -st/distribution-check 
+      - st/distribution-check
   workflow_dispatch: # Allows manual trigger
 
 jobs:
