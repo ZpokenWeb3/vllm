@@ -225,7 +225,7 @@ class OpenAIServingChat(OpenAIServing):
                         self.default_sampling_params)
 
                 if request.inference_id:
-                    sampling_params.inference_id = inference_id
+                    sampling_params.inference_id = request.inference_id
 
                 if request.enforced_str:
                     toks = tokenizer(request.enforced_str,
