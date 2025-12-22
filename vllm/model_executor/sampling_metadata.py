@@ -284,12 +284,12 @@ def _prepare_seq_groups(
 
         if sampling_params.run_seed is not None:
             run_seed = sampling_params.run_seed
-        if sampling_params.seed is not None or sampling_params.inference_id is not None:
+        elif sampling_params.seed is not None or sampling_params.inference_id is not None:
             run_seed = compute_run_seed(sampling_params.seed,
                                         sampling_params.inference_id)
 
         if seq_group_metadata.is_prompt:
-            if sampling_params.seed is not None:
+            if sampling_params.seed is not None or sampling_params.run_seed is not None:
                 if run_seed is None:
                     run_seed = compute_run_seed(sampling_params.seed,
                                                sampling_params.inference_id)
@@ -314,7 +314,7 @@ def _prepare_seq_groups(
                 query_lens) > 0 else 1
             sample_len = len(seq_ids) * query_len if do_sample else 0
 
-            if sampling_params.seed is not None and generators is not None:
+            if (sampling_params.seed is not None or sampling_params.run_seed is not None) and generators is not None:
                 generator = generators.get(seq_group_metadata.request_id)
 
         # Update indices to select from the model output.
