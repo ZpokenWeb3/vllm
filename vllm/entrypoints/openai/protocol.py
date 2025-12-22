@@ -417,6 +417,8 @@ class ChatCompletionRequest(OpenAIBaseModel):
 
     enforced_tokens: Optional[EnforcedTokens] = Field(default=None)
     enforced_str: Optional[str] = Field(default=None)
+    inference_id: Optional[str] = Field(default=None)
+    run_seed: Optional[int] = Field(default=None)
 
     # --8<-- [end:chat-completion-extra-params]
 
@@ -1246,6 +1248,7 @@ class CompletionResponseChoice(OpenAIBaseModel):
             "including encountering the EOS token"),
     )
     prompt_logprobs: Optional[list[Optional[dict[int, Logprob]]]] = None
+    run_seed: Optional[int] = None
 
 
 class CompletionResponse(OpenAIBaseModel):
@@ -1436,6 +1439,7 @@ class ChatCompletionResponseChoice(OpenAIBaseModel):
     finish_reason: Optional[str] = "stop"
     # not part of the OpenAI spec but included in vLLM for legacy reasons
     stop_reason: Optional[Union[int, str]] = None
+    run_seed: Optional[int] = None
 
 
 class ChatCompletionResponse(OpenAIBaseModel):

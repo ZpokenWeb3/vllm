@@ -137,6 +137,9 @@ class SamplerOutput(
     # block/sync across workers, cpu-gpu sync time and sampling time.
     model_execute_time: Optional[float] = None
 
+    # Run seeds for sampling artifacts. Shape: (num_seq_groups,)
+    run_seeds: Optional[torch.Tensor] = None
+
     def __getitem__(self, idx: int) -> CompletionSequenceGroupOutput:
         return self.outputs[idx]
 
@@ -1251,12 +1254,23 @@ def _build_sampler_output(
         sampled_token_probs, logprobs_tensor, sampled_token_ids = (None, None,
                                                                    None)
 
+    run_seeds_list = [
+        seq_group.run_seed if seq_group.run_seed is not None else 0
+        for seq_group in sampling_metadata.seq_groups
+    ]
+    run_seeds_tensor = torch.tensor(
+        run_seeds_list,
+        dtype=torch.int64,
+        device=logprobs_tensor.device if logprobs_tensor is not None else None
+    ) if run_seeds_list else None
+
     return SamplerOutput(
         outputs=sampler_output,
         sampled_token_probs=sampled_token_probs,
         sampled_token_ids=sampled_token_ids,
         logprobs=logprobs_tensor,
-        deferred_sample_results_args=deferred_sample_results_args)
+        deferred_sample_results_args=deferred_sample_results_args,
+        run_seeds=run_seeds_tensor)
 
 
 def _get_next_prompt_tokens(

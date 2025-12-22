@@ -224,15 +224,22 @@ class OpenAIServingChat(OpenAIServing):
                         self.model_config.logits_processor_pattern,
                         self.default_sampling_params)
 
+                if request.inference_id:
+                    sampling_params.inference_id = request.inference_id
+
                 if request.enforced_str:
                     toks = tokenizer(request.enforced_str,
                                      add_special_tokens=False)
-                    sampling_params.enforced_token_ids = toks.input_ids 
+                    sampling_params.enforced_token_ids = toks.input_ids
+                    if request.run_seed:
+                        sampling_params.run_seed = request.run_seed
                     if sampling_params.enforced_token_ids[-1] != tokenizer.eos_token_id:
                         sampling_params.enforced_token_ids.append(tokenizer.eos_token_id)
                 elif request.enforced_tokens:
                     request.enforced_tokens.encode(tokenizer)
                     sampling_params.enforced_tokens = request.enforced_tokens
+                    if request.run_seed:
+                        sampling_params.run_seed = request.run_seed
                     sampling_params.enforced_token_ids = request.enforced_tokens.get_enforced_token_ids()
                     if request.enforced_tokens.tokens[-1].token_id != tokenizer.eos_token_id:
                         sampling_params.enforced_tokens.tokens.append(EnforcedToken(
@@ -1096,7 +1103,8 @@ class OpenAIServingChat(OpenAIServing):
                 logprobs=logprobs,
                 finish_reason="tool_calls" if auto_tools_called else
                 output.finish_reason if output.finish_reason else "stop",
-                stop_reason=output.stop_reason)
+                stop_reason=output.stop_reason,
+                run_seed=output.run_seed)
             choices.append(choice_data)
 
         if request.echo:

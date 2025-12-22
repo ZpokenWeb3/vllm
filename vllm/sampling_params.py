@@ -202,6 +202,13 @@ class SamplingParams(
         extra_args: Arbitrary additional args, that can be used by custom
             sampling implementations. Not used by any in-tree sampling
             implementations.
+        inference_id: Optional identifier for the inference request, used to
+            generate deterministic run_seed when combined with seed parameter.
+            Defaults to None.
+        run_seed: Computed seed value derived from seed and inference_id. When
+            provided along with enforced_str or enforced_tokens, this seed is
+            used for RNG during sampling. Automatically computed if not provided.
+            Defaults to None.
     """
 
     n: int = 1
@@ -252,6 +259,9 @@ class SamplingParams(
     enforced_token_ids: Optional[list[int]] = None
     enforced_tokens: Optional[EnforcedTokens] = None
 
+    inference_id: Optional[str] = None
+    run_seed: Optional[int] = None
+
     @staticmethod
     def from_optional(
         n: Optional[int] = 1,
@@ -286,6 +296,8 @@ class SamplingParams(
         extra_args: Optional[dict[str, Any]] = None,
         enforced_token_ids: Optional[list[int]] = None,
         enforced_tokens: Optional[EnforcedTokens] = None,
+        inference_id: Optional[str] = None,
+        run_seed: Optional[int] = None,
     ) -> "SamplingParams":
         if logit_bias is not None:
             # Convert token_id to integer
@@ -330,6 +342,8 @@ class SamplingParams(
             extra_args=extra_args,
             enforced_token_ids=enforced_token_ids,
             enforced_tokens=enforced_tokens,
+            inference_id=inference_id,
+            run_seed=run_seed,
         )
 
     def __post_init__(self) -> None:
